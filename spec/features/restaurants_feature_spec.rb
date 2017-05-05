@@ -1,11 +1,16 @@
 require 'rails_helper'
 
 feature 'Restaurants' do
+  before do
+    User.create(email: 'test@test.com', password: 'password', password_confirmation: 'password')
+    visit '/'
+    click_link 'Sign in'
+    fill_in 'Email', with: 'test@test.com'
+    fill_in 'Password', with: 'password'
+    click_button 'Log in'
+  end
 
   context 'no restaurants have been added' do
-    before do
-      sign_up
-    end
     scenario 'should display a prompt to add a restaurant' do
       visit '/restaurants'
       expect(page).to have_content 'No restaurants yet'
@@ -14,12 +19,10 @@ feature 'Restaurants' do
   end
 
   context 'restaurants have been added' do
-    before do
-      sign_up
-      Restaurant.create(name: 'KFC')
-    end
 
     scenario 'display restaurants' do
+      user = User.first
+      user.restaurants.create(name: 'KFC')
       visit '/restaurants'
       expect(page).to have_content 'KFC'
       expect(page).not_to have_content 'No restaurants yet'
@@ -27,9 +30,6 @@ feature 'Restaurants' do
   end
 
   context 'creating restaurants' do
-    before do
-      sign_up
-    end
     scenario 'prompt user to fill out a form, then displays the new restaurant' do
       visit '/restaurants'
       click_link 'Add a restaurant'
@@ -41,9 +41,6 @@ feature 'Restaurants' do
   end
 
     context 'invalid restaurant' do
-      before do
-        sign_up
-      end
       scenario 'does not let user submit a name that is too short' do
         visit '/restaurants'
         click_link 'Add a restaurant'
@@ -55,25 +52,21 @@ feature 'Restaurants' do
     end
 
   context 'viewing restaurants' do
-    let!(:kfc){ Restaurant.create(name: 'KFC')}
-    before do
-      sign_up
-    end
 
     scenario 'lets a user view a restaurant' do
+      user = User.first
+      user.restaurants.create(name: 'KFC')
       visit '/restaurants'
       click_link 'KFC'
       expect(page).to have_content 'KFC'
-      expect(current_path).to eq "/restaurants/#{kfc.id}"
+      expect(current_path).to eq "/restaurants/#{user.restaurants.first.id}"
     end
   end
 
   context 'editing restaurants' do
-    before do
-      sign_up
-    end
-    before {Restaurant.create name: 'KFC', description: 'deep fried goodness', id: 1}
     scenario 'let a user edit a restaurant' do
+      user = User.first
+      user.restaurants.create(name: 'KFC', description: 'deep fried goodness', id: 1)
       visit '/restaurants'
       click_link 'Edit KFC'
       fill_in 'Name', with: 'Kentucky Fried Chicken'
@@ -87,11 +80,10 @@ feature 'Restaurants' do
   end
 
   context 'deleting restaurants' do
-    before  do
-      sign_up
-      Restaurant.create name: 'KFC', description: 'deep fried goodness'
-    end
+
     scenario 'removes a restaurant when user clicks delete link' do
+      user = User.first
+      user.restaurants.create(name: 'KFC', description: 'deep fried goodness')
       visit '/restaurants'
       click_link 'Delete KFC'
       expect(page).not_to have_content 'KFC'
@@ -101,7 +93,6 @@ feature 'Restaurants' do
 
   context 'logged out' do
     before do
-      sign_up
       Restaurant.create name: 'KFC', description: 'deep fried goodness'
       visit '/'
       click_link 'Sign out'
