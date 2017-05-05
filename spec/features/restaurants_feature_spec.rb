@@ -93,7 +93,8 @@ feature 'Restaurants' do
 
   context 'logged out' do
     before do
-      Restaurant.create name: 'KFC', description: 'deep fried goodness'
+      user = User.first
+      user.restaurants.create name: 'KFC', description: 'deep fried goodness'
       visit '/'
       click_link 'Sign out'
     end
@@ -103,7 +104,18 @@ feature 'Restaurants' do
       click_link 'Add a restaurant'
       expect(page).to have_content 'Log in'
     end
-  end
 
+    scenario 'redirects to the log in page when trying to edit restaurant' do
+      visit '/restaurants'
+      click_link 'Edit KFC'
+      expect(page).to have_content 'Log in'
+    end
+
+    scenario 'redirects to the log in page when trying to delete restaurant' do
+      visit '/restaurants'
+      click_link 'Delete KFC'
+      expect(page).to have_content 'Log in'
+    end
+  end
 
 end
